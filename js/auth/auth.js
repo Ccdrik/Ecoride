@@ -1,47 +1,43 @@
-// js/auth/auth.js
-
 // === CONSTANTES ===
 export const tokenCookieName = "token";
 export const roleCookieName = "role";
 
-// === COOKIES ===
+// === GESTION DES COOKIES ===
 export function setCookie(name, value, days = 1) {
     const expires = new Date(Date.now() + days * 86400000).toUTCString();
     document.cookie = `${name}=${value}; expires=${expires}; path=/`;
 }
 
 export function getCookie(name) {
-    const cookies = document.cookie.split(";").map(c => c.trim());
-    const cookie = cookies.find(c => c.startsWith(`${name}=`));
-    return cookie ? cookie.split("=")[1] : null;
+    const cookie = document.cookie
+        .split(";")
+        .map(c => c.trim())
+        .find(c => c.startsWith(`${name}=`));
+    return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
 }
 
 export function deleteCookie(name) {
     document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT;`;
 }
 
-// === TOKENS ===
+// === TOKEN ===
 export function setToken(token) {
     setCookie(tokenCookieName, token);
 }
-
 export function getToken() {
     return getCookie(tokenCookieName);
 }
-
 export function deleteToken() {
     deleteCookie(tokenCookieName);
 }
 
-// === ROLES ===
+// === RÔLE ===
 export function setRole(role) {
     setCookie(roleCookieName, role);
 }
-
 export function getRole() {
     return getCookie(roleCookieName);
 }
-
 export function deleteRole() {
     deleteCookie(roleCookieName);
 }
@@ -51,40 +47,37 @@ export function isConnected() {
     return !!getToken();
 }
 
-// === AFFICHAGE DES ÉLÉMENTS SELON LE RÔLE ===
+// === AFFICHAGE DES BOUTONS SELON LE RÔLE / ÉTAT ===
 export function showAndHideElementsForRoles() {
     const role = getRole();
+    const connected = isConnected();
 
     document.querySelectorAll("[data-show]").forEach(elem => {
-        const showCondition = elem.getAttribute("data-show");
+        const condition = elem.getAttribute("data-show");
 
-        if (
-            (showCondition === "connected" && isConnected()) ||
-            (showCondition === "disconnected" && !isConnected()) ||
-            (showCondition === role)
-        ) {
-            elem.style.display = "";
-        } else {
-            elem.style.display = "none";
-        }
+        const shouldShow =
+            (condition === "connected" && connected) ||
+            (condition === "disconnected" && !connected) ||
+            (condition === role);
+
+        elem.style.display = shouldShow ? "" : "none";
     });
 }
+
+// === DÉCONNEXION GLOBALE ===
 export function clearAuthCookies() {
     deleteToken();
     deleteRole();
 }
 
+// === ERREUR 401 (non connecté) ===
 export function handle401(response) {
     if (response.status === 401) {
         alert("Session expirée. Merci de vous reconnecter.");
-        window.location.href = "/signin";
+        clearAuthCookies();
+        window.history.pushState({}, "", "/signin");
+        dispatchEvent(new PopStateEvent("popstate"));
         return true;
     }
     return false;
-}
-
-function isTokenExpired(token) {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp < now;
 }

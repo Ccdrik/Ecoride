@@ -8,82 +8,65 @@
     </div>
 </div>
 
-
-
-<section class="mb-3">
-    <form class="mb-4">
-        <div class="row">
-            <div class="col-md-4">
-                <input type="text" id="depart" list="depart-suggestions" class="form-control"
-                    placeholder="Ville de départ" required>
-                <datalist id="depart-suggestions"></datalist>
-            </div>
-            <div class="col-md-4">
-                <input type="text" id="arrivee" list="arrivee-suggestions" class="form-control"
-                    placeholder="Ville d'arrivée" required>
-                <datalist id="arrivee-suggestions"></datalist>
-            </div>
-            <div class="col-md-3">
-                <input type="date" id="date" class="form-control" required>
-            </div>
-            <div class="col-md-1">
-                <button type="submit" class="btn btn-success w-100">🔍</button>
-            </div>
-        </div>
-    </form>
-
-    <div id="resultats-trajets"></div>
-</section>
-<section>
-    <div class="presentation text-center">
-        <h3>🌱 Présentation de l’entreprise EcoRide</h3>
-        <br>
-        <p>
-
-            EcoRide est une jeune startup française engagée dans la transition écologique, née de la volonté de repenser
-            la mobilité quotidienne. Fondée en 2025, notre mission est de réduire l’impact environnemental des
-            déplacements en mettant en avant une solution simple, efficace et économique : le covoiturage entre
-            particuliers.
-            <br>
-            <img src="../Images/Start-up Eco.jpg">
-            <br>
-            <br>
-            Spécialisée exclusivement dans les trajets en voiture, notre plateforme web facilite la mise en relation de
-            conducteurs et de passagers partageant un même itinéraire. Que ce soit pour des trajets quotidiens ou
-            occasionnels, EcoRide encourage une mobilité plus responsable et solidaire.
-            <br>
-            <img src="../Images/Voiture eco.jpg">
-            <br>
-            <br>
-
-            💡 Notre ambition : devenir la plateforme de référence en matière de covoiturage écologique en France et, à
-            terme, en Europe.
-            <br>
-            <br>
-
-            🧑‍💻 Le projet est porté par José, directeur technique et cofondateur, avec le soutien de développeurs
-            passionnés. Ensemble, nous construisons une application web moderne, intuitive et respectueuse de
-            l’environnement, pensée pour répondre aux attentes des citoyens d’aujourd’hui et de demain.
-            <br>
-            <br>
-
-            🌍 En choisissant EcoRide, vous participez activement à :
-            <br>
-            <br>
-
-            La réduction des émissions de CO₂
-            <br>
-            <br>
-
-            La diminution du trafic routier
-            <br>
-            <br>
-
-            Une économie de transport plus accessible
-            <br>
-            <br>
-
-            Rejoignez le mouvement EcoRide et transformons ensemble nos trajets en un geste pour la planète !
-        </p>
+<form id="form-recherche" class="table-style my-4">
+    <div class="mb-3 text-center">
+        <h2>🔍 Rechercher un trajet</h2>
     </div>
+
+    <div class="input-group mb-3">
+        <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
+        <input class="form-control" type="text" id="depart" name="depart" required placeholder="Départ">
+    </div>
+
+
+    <div class="input-group mb-3">
+        <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
+        <input class="form-control" type="text" id="arrivee" name="arrivee" required placeholder="Arrivée">
+    </div>
+
+
+    <div class="mb-3">
+        <input class="form-control" type="date" id="date" name="date" required>
+    </div>
+
+    <div class="text-center">
+        <button type="submit" class="btn btn-primary">Rechercher</button>
+    </div>
+
+    <div class="mt-4">
+        <h2 class="text-center">🚗 Liste des trajets disponibles</h2>
+        <div id="liste-trajets" class="row mt-4 gy-4"></div>
+        <div id="message-aucun-resultat" class="alert alert-warning d-none text-center mt-4">
+            Aucun trajet trouvé. Essayez une autre date.
+        </div>
+
+    </div>
+</form>
+
+<section class="presentation container my-5 text-center">
+    <h3>🌱 Présentation de l’entreprise EcoRide</h3>
+    <p>
+        EcoRide est une jeune startup française engagée dans la transition écologique, née de la volonté de repenser la
+        mobilité quotidienne.
+        Fondée en 2025, notre mission est de réduire l’impact environnemental des déplacements en mettant en avant une
+        solution simple, efficace
+        et économique : le covoiturage entre particuliers.
+    </p>
+    <img src="../Images/Start-up Eco.jpg" class="img-fluid my-3" alt="Startup EcoRide">
+    <p>
+        Spécialisée exclusivement dans les trajets en voiture, notre plateforme facilite la mise en relation de
+        conducteurs et de passagers.
+        Que ce soit pour des trajets quotidiens ou occasionnels, EcoRide encourage une mobilité plus responsable et
+        solidaire.
+    </p>
+    <img src="../Images/Voiture eco.jpg" class="img-fluid my-3" alt="Voiture écologique">
+    <p>
+        💡 Notre ambition : devenir la plateforme de référence du covoiturage écologique en France et en Europe.<br><br>
+        🧑‍💻 Projet porté par José et son équipe de développeurs passionnés.<br><br>
+        🌍 En rejoignant EcoRide, vous participez à :<br>
+        - La réduction des émissions de CO₂<br>
+        - La diminution du trafic routier<br>
+        - Une économie de transport plus accessible<br><br>
+        Rejoignez le mouvement EcoRide et transformons ensemble nos trajets en un geste pour la planète !
+    </p>
 </section>

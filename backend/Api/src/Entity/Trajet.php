@@ -6,21 +6,28 @@ use App\Repository\TrajetRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
+
+
 
 #[ORM\Entity(repositoryClass: TrajetRepository::class)]
 class Trajet
 {
+    
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Groups(['reservation:read'])]
     #[ORM\Column(length: 255)]
     private ?string $villeDepart = null;
 
+    #[Groups(['reservation:read'])]
     #[ORM\Column(length: 255)]
     private ?string $villeArrivee = null;
 
+    #[Groups(['reservation:read'])]
     #[ORM\Column]
     private ?\DateTimeImmutable $dateDepart = null;
 
@@ -33,7 +40,6 @@ class Trajet
     #[ORM\Column(type: 'boolean')]
     private bool $ecologique = false;
 
-
     #[ORM\ManyToOne(inversedBy: 'trajets')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $chauffeur = null;
@@ -41,6 +47,10 @@ class Trajet
     #[ORM\OneToMany(mappedBy: 'trajet', targetEntity: Reservation::class, orphanRemoval: true)]
     private Collection $reservations;
 
+    #[ORM\Column(type: 'boolean')]
+    private bool $actif = true;
+
+    
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
@@ -110,6 +120,12 @@ class Trajet
     {
         return $this->ecologique;
     }
+
+    public function getEcologique(): ?bool
+    {
+    return $this->ecologique;
+    }
+    
     public function setEcologique(bool $ecologique): self
     {
         $this->ecologique = $ecologique;
@@ -150,4 +166,28 @@ class Trajet
         $this->reservations->removeElement($reservation);
         return $this;
     }
+
+    public function getPlacesDisponibles(): int
+{
+    $placesRéservées = array_reduce(
+        $this->getReservations()->toArray(),
+        fn($total, $reservation) => $total + $reservation->getPlaces(),
+        0
+    );
+
+    return $this->nbPlaces - $placesRéservées;
+    }      
+
+
+    public function isActif(): bool
+{
+    return $this->actif;
+}
+
+public function setActif(bool $actif): self
+{
+    $this->actif = $actif;
+    return $this;
+}
+  
 }

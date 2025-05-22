@@ -6,14 +6,23 @@
 
 
 <div class="scene-content text-center">
-    <h1>Réserver un trajet</h1>
+    <h1>Mes trajets réservés</h1>
 </div>
 
-<section class="mb-3 table-center">
-    <div class="table-style">
-        <h2 class="text-center mb-3">Informations du trajet sélectionné</h2>
-        <p id="info-trajet">Chargement...</p>
-
-        <button id="btn-reserver" class="btn btn-success">Réserver ce trajet</button>
-    </div>
+<section class="table-style mt-4">
+    <table class="table table-bordered text-center">
+        <thead class="table-success">
+            <tr>
+                <th>Départ</th>
+                <th>Arrivée</th>
+                <th>Date</th>
+                <th>Places réservées</th>
+            </tr>
+        </thead>
+        <tbody id="tableau-reservations">
+            <tr>
+                <td colspan="4">Chargement...</td>
+            </tr>
+        </tbody>
+    </table>
 </section>

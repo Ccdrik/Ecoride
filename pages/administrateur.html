@@ -8,13 +8,14 @@
     </div>
 </div>
 
-<div>
+<div class="mb-3 text-center">
     <h1>Gestion des comptes utilisateurs</h1>
 </div>
-<div class="container my-5">
 
-    <p class="mb-4">Voici la liste des comptes actifs sur la plateforme. Vous pouvez suspendre un compte si nécessaire.
-    </p>
+<div class="table-style container my-5">
+
+    <h2 class="mb-4">Voici la liste des comptes actifs sur la plateforme. Vous pouvez suspendre un compte si nécessaire.
+    </h2>
 
     <!-- Tableau de comptes -->
     <table class="table table-bordered table-striped">
@@ -27,23 +28,7 @@
                 <th>Action</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- Exemple statique -->
-            <tr>
-                <td>Jean75</td>
-                <td>jean@example.com</td>
-                <td>Utilisateur</td>
-                <td><span class="badge bg-success">Actif</span></td>
-                <td><button class="btn btn-danger btn-sm">Suspendre</button></td>
-            </tr>
-            <tr>
-                <td>LucieDev</td>
-                <td>lucie@employe.com</td>
-                <td>Employé</td>
-                <td><span class="badge bg-danger">Suspendu</span></td>
-                <td><button class="btn btn-secondary btn-sm" disabled>Déjà suspendu</button></td>
-            </tr>
-        </tbody>
+        <tbody id="admin-users-table"></tbody>
     </table>
 
     <hr>

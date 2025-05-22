@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ReservationRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ReservationRepository::class)]
 class Reservation
@@ -13,13 +14,18 @@ class Reservation
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
-    private ?int $nbPlacesReservees = null;
-
+    
     #[ORM\ManyToOne(inversedBy: 'reservations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $passager = null;
 
+    
+
+    #[Groups(['reservation:read'])]
+    #[ORM\Column]
+    private ?int $nbPlacesReservees = 1;
+
+    #[Groups(['reservation:read'])]
     #[ORM\ManyToOne(inversedBy: 'reservations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Trajet $trajet = null;
@@ -38,6 +44,12 @@ class Reservation
     {
         $this->nbPlacesReservees = $nbPlacesReservees;
         return $this;
+    }
+
+    // ✅ Ajouté pour compatibilité avec getPlacesDisponibles()
+    public function getPlaces(): int
+    {
+        return $this->nbPlacesReservees ?? 0;
     }
 
     public function getPassager(): ?User

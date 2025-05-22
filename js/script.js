@@ -1,177 +1,119 @@
 import {
+    getToken,
     isConnected,
     getRole,
-    showAndHideElementsForRoles,
-    getToken,
-    handle401
+    showAndHideElementsForRoles
 } from "./auth/auth.js";
 
-export default function () {
-    document.addEventListener('DOMContentLoaded', () => {
-        showAndHideElementsForRoles();
+import "./auth/signout.js";
 
-        const API_BASE_URL = window.location.origin.includes('5500')
-            ? 'http://127.0.0.1:8000/api'
-            : 'http://127.0.0.1:8000/api';
+export function initScriptPage() {
+    console.log("✅ script.js chargé !");
 
-        console.log("URL utilisée pour fetch:", API_BASE_URL);
+    window.addEventListener("load", () => {
+        try {
+            showAndHideElementsForRoles();
 
-        const form = document.querySelector("form");
-        const resultContainer = document.getElementById("resultats-trajets");
+            const form = document.getElementById("form-recherche");
+            const departInput = document.getElementById("depart");
+            const arriveeInput = document.getElementById("arrivee");
+            const dateInput = document.getElementById("date");
+            const container = document.getElementById("liste-trajets");
+            const messageAucun = document.getElementById("message-aucun-resultat");
 
-        // Gestion de la soumission du formulaire
-        form?.addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const depart = document.getElementById("depart").value.trim();
-            const arrivee = document.getElementById("arrivee").value.trim();
-            const date = document.getElementById("date").value;
-
-            if (!depart || !arrivee || !date) {
-                alert("Merci de remplir tous les champs !");
-                return;
+            // 🔁 1. Rechercher automatiquement si paramètres présents dans l'URL
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("depart") && params.has("arrivee") && params.has("date")) {
+                departInput.value = params.get("depart");
+                arriveeInput.value = params.get("arrivee");
+                dateInput.value = params.get("date");
+                afficherTrajets(params.get("depart"), params.get("arrivee"), params.get("date"), container, messageAucun);
             }
 
-            const searchUrl = `${API_BASE_URL}/trajets/search?villeDepart=${encodeURIComponent(depart)}&villeArrivee=${encodeURIComponent(arrivee)}&date=${encodeURIComponent(date)}`;
+            // 🔍 2. Formulaire de recherche
+            if (form) {
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
 
-            try {
-                const res = await fetch(searchUrl, {
-                    headers: { Authorization: `Bearer ${getToken()}` }
+                    const depart = departInput.value.trim();
+                    const arrivee = arriveeInput.value.trim();
+                    const date = dateInput.value;
+
+                    if (!depart || !arrivee || !date) {
+                        alert("Merci de remplir tous les champs !");
+                        return;
+                    }
+
+                    // Mettre à jour l’URL avec les paramètres de recherche
+                    const url = `?depart=${encodeURIComponent(depart)}&arrivee=${encodeURIComponent(arrivee)}&date=${encodeURIComponent(date)}`;
+                    history.pushState({}, "", url);
+
+                    afficherTrajets(depart, arrivee, date, container, messageAucun);
                 });
-
-                if (handle401(res)) return;
-                if (!res.ok) throw new Error("Erreur API");
-
-                const data = await res.json();
-                const trajets = data["hydra:member"] || data;
-
-                resultContainer.innerHTML = `<div class="text-center text-muted">🔄 Chargement en cours...</div>`;
-
-                if (trajets.length === 0) {
-                    alert("😕 Aucun trajet trouvé pour ces critères !");
-                    resultContainer.innerHTML += `<p class="text-center text-muted">Aucun trajet trouvé pour ces critères.</p>`;
-                    return;
-                }
-
-                const ul = document.createElement("ul");
-                ul.className = "list-group";
-
-                trajets.forEach(trajet => {
-                    const li = document.createElement("li");
-                    li.className = "list-group-item";
-                    li.innerHTML = `
-            <strong>${trajet.villeDepart} → ${trajet.villeArrivee}</strong><br>
-            📅 ${trajet.dateDepart}<br>
-            🚘 ${trajet.nbPlaces} places disponibles<br>
-            💶 ${trajet.prix} €<br>
-            <button class="btn btn-primary mt-2 btn-reserver" data-trajet-id="${trajet.id}">Réserver</button>
-          `;
-                    ul.appendChild(li);
-                });
-
-                resultContainer.appendChild(ul);
-
-                document.querySelectorAll(".btn-reserver").forEach(button => {
-                    button.addEventListener("click", async () => {
-                        const trajetId = button.dataset.trajetId;
-
-                        try {
-                            const res = await fetch(`${API_BASE_URL}/reservations`, {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${getToken()}`
-                                },
-                                body: JSON.stringify({ trajetId })
-                            });
-
-                            if (handle401(res)) return;
-
-                            const responseData = await res.json();
-
-                            if (!res.ok) {
-                                const message = responseData.message || "Erreur lors de la réservation.";
-                                if (message.includes("réservé")) {
-                                    alert("❌ Vous avez déjà réservé ce trajet.");
-                                } else if (message.includes("complet")) {
-                                    alert("❌ Ce trajet est complet.");
-                                } else {
-                                    alert("❌ " + message);
-                                }
-                                return;
-                            }
-
-                            alert("✅ Réservation confirmée !");
-                            button.disabled = true;
-                            button.textContent = "Réservé ✅";
-
-                        } catch (error) {
-                            console.error("Erreur lors de la réservation :", error);
-                            alert("❌ Une erreur technique est survenue.");
-                        }
-                    });
-
-                });
-            } catch (error) {
-                console.error("Erreur lors de la recherche :", error);
-                resultContainer.innerHTML = `<p class="text-danger">Erreur lors de la recherche des trajets.</p>`;
             }
-        });
-
-        // Autocomplétion avec API adresse.data.gouv.fr
-        setupAutocomplete("depart", "depart-suggestions");
-        setupAutocomplete("arrivee", "arrivee-suggestions");
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const preDepart = urlParams.get("depart");
-        const preArrivee = urlParams.get("arrivee");
-        const preDate = urlParams.get("date");
-
-        const departInput = document.getElementById("depart");
-        const arriveeInput = document.getElementById("arrivee");
-        const dateInput = document.getElementById("date");
-
-        if (departInput && arriveeInput && dateInput) {
-            if (preDepart) departInput.value = preDepart;
-            if (preArrivee) arriveeInput.value = preArrivee;
-            if (preDate) dateInput.value = preDate;
-
-            // Soumettre automatiquement le formulaire si tous les champs sont remplis
-            if (preDepart && preArrivee && preDate) {
-                form?.dispatchEvent(new Event("submit"));
-            }
-        } else {
-            console.warn("Un ou plusieurs champs (depart, arrivee, date) sont introuvables dans cette page.");
+        } catch (e) {
+            console.error("❌ Erreur dans initScriptPage :", e);
         }
     });
 }
 
-function setupAutocomplete(inputId, datalistId) {
-    const input = document.getElementById(inputId);
-    const datalist = document.getElementById(datalistId);
+export default initScriptPage;
 
-    if (!input || !datalist) return;
+// 🔁 Fonction centrale d'affichage
+function afficherTrajets(depart, arrivee, date, container, messageAucun) {
+    console.log("🔍 Recherche de trajets lancée...");
 
-    input.addEventListener("input", async () => {
-        const query = input.value.trim();
-        if (query.length < 3) {
-            datalist.innerHTML = "";
-            return;
+    const url = `http://127.0.0.1:8000/api/trajets?depart=${encodeURIComponent(depart)}&arrivee=${encodeURIComponent(arrivee)}&date=${encodeURIComponent(date)}`;
+
+    fetch(url, {
+        headers: {
+            "Authorization": `Bearer ${getToken()}`
         }
+    })
+        .then(res => {
+            if (!res.ok) throw new Error("Erreur API");
+            return res.json();
+        })
+        .then(trajets => {
+            console.log("📥 Trajets reçus :", trajets);
+            container.innerHTML = "";
+            messageAucun.classList.add("d-none");
 
-        try {
-            const response = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5`);
+            if (trajets.length === 0) {
+                messageAucun.classList.remove("d-none");
+                return;
+            }
 
-            const data = await response.json();
+            trajets.forEach(trajet => {
+                console.log("🔁 Trajet affiché :", trajet);
+                const [dateJour, heure] = trajet.dateDepart.split(" ");
+                const card = document.createElement("div");
+                card.className = "col-md-6 col-lg-4";
 
-            datalist.innerHTML = "";
-            data.features.forEach(feature => {
-                const option = document.createElement("option");
-                option.value = feature.properties.label;
-                datalist.appendChild(option);
+                card.innerHTML = `
+                
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">${trajet.villeDepart} → ${trajet.villeArrivee}</h5>
+                            <p class="card-text">
+                                📅 ${dateJour} à ${heure}<br>
+                                👥 ${trajet.nbPlaces} place(s)<br>
+                                💰 ${trajet.prix} crédit(s)<br>
+                                ${trajet.ecologique ? "🌱 Écologique" : "🚗 Standard"}<br>
+                                🧑 Chauffeur : ${trajet.chauffeur?.email ?? "?"}
+                            </p>
+                            <button class="btn btn-sm btn-success" data-id="${trajet.id}">
+                                Réserver
+                            </button>
+                        </div>
+                    </div>
+                
+                `;
+                container.appendChild(card);
             });
-        } catch (error) {
-            console.error("Erreur autocomplétion adresse :", error);
-        }
-    });
+        })
+        .catch(err => {
+            console.error("Erreur API :", err);
+            container.innerHTML = `<p class="text-danger text-center">Erreur lors du chargement des trajets.</p>`;
+        });
 }

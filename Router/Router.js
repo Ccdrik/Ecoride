@@ -1,113 +1,88 @@
-// Router.js — version corrigée et prête à l'emploi
-
-import { allRoutes, websiteName } from "./allRoutes.js";
 import Route from "./Route.js";
-import { getRole, isConnected, showAndHideElementsForRoles } from "../js/auth/auth.js";
+import { allRoutes, websiteName } from "./allRoutes.js";
+import { showAndHideElementsForRoles } from "../js/auth/auth.js";
 
-// Chargement initial après DOM prêt
-document.addEventListener("DOMContentLoaded", () => {
-    // Redirige /index.html vers / pour normaliser l'URL
-    if (window.location.pathname === "/index.html") {
-        history.replaceState({}, "", "/");
-    }
-
-    initRouter();
-    window.addEventListener("popstate", routerNavigation);
-});
-
-function initRouter() {
-    // Interception des clics sur les liens data-link
-    document.body.addEventListener("click", async (event) => {
-        const target = event.target.closest("a");
-
-        if (target && target.matches("[data-link]")) {
-            event.preventDefault();
-            const path = target.getAttribute("href");
-            if (path) {
-                history.pushState({}, "", path);
-                await routerNavigation();
-            }
-        }
-    });
-
-    // Exécution immédiate de la première route
-    routerNavigation();
+if (window.location.pathname === "/index.html") {
+    history.replaceState({}, "", "/");
 }
 
-async function routerNavigation() {
-    const path = window.location.pathname;
-    const cleanedPath = path === "/index.html" ? "/" : path;
-    const route = allRoutes.find((r) => r.path === cleanedPath);
+// Route 404 par défaut
+const route404 = new Route("/404", "Page introuvable", "/pages/404.html");
 
-    if (!route) {
-        return displayNotFound();
-    }
+// Obtenir la bonne route
+const getRouteByUrl = (url) => {
+    return allRoutes.find(route => route.url === url) || route404;
+};
 
-    // Sécurité : rôle requis ?
-    if (route.roles && route.roles.length > 0) {
-        const role = getRole();
-        if (!isConnected() || !role || !route.roles.includes(role)) {
-            alert("Accès non autorisé");
-            history.pushState({}, "", "/signin");
-            await routerNavigation();
-            return;
-        }
-    }
+// Chargement dynamique d'une page SPA
+const LoadContentPage = async () => {
+    const rawPath = window.location.pathname;
+    const cleanedPath = rawPath.replace("/EcoRideFront", "") || "/";
+
+    console.log("➡️ URL demandée :", rawPath);
+    console.log("🧼 Chemin nettoyé :", cleanedPath);
+
+    const actualRoute = getRouteByUrl(cleanedPath);
+    console.log("🧭 Route trouvée :", actualRoute);
 
     try {
-        const res = await fetch(route.pathHtml);
-        if (!res.ok) throw new Error("Fichier HTML introuvable");
+        // Charger la page HTML
+        const res = await fetch(actualRoute.pathHtml);
+        if (!res.ok) throw new Error("Page HTML introuvable");
+
         const html = await res.text();
-        const app = document.getElementById("app");
-        if (!app) throw new Error("Élément #app manquant dans index.html");
+        const container = document.getElementById("main-page");
+        if (!container) throw new Error("Conteneur #main-page introuvable");
 
-        app.innerHTML = html;
-        document.title = `${route.title} - ${websiteName}`;
+        container.innerHTML = html;
+        document.title = `${actualRoute.title} - ${websiteName}`;
 
-        showAndHideElementsForRoles();
+        showAndHideElementsForRoles(); // Affiche/Masque les éléments selon le rôle
 
-        // Chargement JS spécifique à la route
-        if (route.pathJS) {
+        if (actualRoute.pathJS) {
             try {
-                const module = await import(`${route.pathJS}`);
+                const module = await import(`../${actualRoute.pathJS}`);
+                console.log("📦 Module chargé :", actualRoute.pathJS); // ✅ ici, bien placé
 
-                if (typeof module.default === "function") {
-                    module.default();
-                } else {
-                    const routeName = extractNameFromPath(route.path);
-                    const initFuncName = `init${capitalizeFirstLetter(routeName)}Page`;
-                    if (typeof module[initFuncName] === "function") {
-                        module[initFuncName]();
-                    }
-                }
+                if (typeof module.initSigninPage === "function") module.initSigninPage();
+                else if (typeof module.initSignupPage === "function") module.initSignupPage();
+                else if (typeof module.initAdministrateurPage === "function") module.initAdministrateurPage();
+                else if (typeof module.initCovoituragesPage === "function") module.initCovoituragesPage();
+                else if (typeof module.initHomePage === "function") module.initHomePage();
+                else if (typeof module.initVoiturePage === "function") module.initVoiturePage();
+                else if (typeof module.initAccountPage === "function") module.initAccountPage(); // 
+                else if (typeof module.default === "function") module.default();
+                else console.warn("⚠️ Aucun point d’entrée trouvé dans :", actualRoute.pathJS);
+
+
             } catch (err) {
-                console.error("Erreur lors du chargement JS de la route:", err);
+                console.error("❌ Erreur import JS :", err);
             }
         }
+
+
     } catch (err) {
-        console.error("Erreur navigation:", err);
-        displayNotFound();
+        console.error("❌ Erreur de chargement :", err);
+        document.getElementById("main-page").innerHTML = `
+            <div class="text-danger text-center py-5">
+                <h1>Erreur 404</h1>
+                <p>Page introuvable ou inaccessible.</p>
+            </div>`;
     }
-}
+};
 
-function displayNotFound() {
-    const app = document.getElementById("app");
-    if (!app) return;
-    app.innerHTML = `
-        <div class="container py-5 text-center">
-            <h1 class="display-4">404</h1>
-            <p class="lead">Page introuvable</p>
-            <a href="/" data-link class="btn btn-primary">Retour à l'accueil</a>
-        </div>
-    `;
-    document.title = `404 - ${websiteName}`;
-}
+// Gestion clics SPA (liens avec data-link)
+document.addEventListener("click", (e) => {
+    const link = e.target.closest("a[data-link]");
+    if (link) {
+        e.preventDefault();
+        window.history.pushState({}, "", link.getAttribute("href"));
+        LoadContentPage();
+    }
+});
 
-function extractNameFromPath(path) {
-    const trimmed = path.replace("/", "");
-    return trimmed || "Home";
-}
+// Bouton retour navigateur
+window.onpopstate = LoadContentPage;
 
-function capitalizeFirstLetter(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
+// Premier chargement de la bonne page
+LoadContentPage();

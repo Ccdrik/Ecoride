@@ -39,13 +39,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: "integer")]
     private int $credits = 20;
 
+    #[ORM\Column(type: 'boolean')]
+    private bool $actif = true;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $photo = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $note = null;
+
     // Relation OneToMany vers Trajet avec mappedBy 'chauffeur'
     #[ORM\OneToMany(mappedBy: 'chauffeur', targetEntity: Trajet::class, orphanRemoval: true)]
     private Collection $trajets;
 
     // Relation OneToMany vers Reservation avec mappedBy 'user'
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Reservation::class, orphanRemoval: true)]
-    private Collection $reservations;
+    #[ORM\OneToMany(mappedBy: 'passager', targetEntity: Reservation::class, orphanRemoval: true)]
+private Collection $reservations;
 
     public function __construct()
     {
@@ -216,5 +225,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return $this;
+    }
+
+    public function isActif(): bool
+    {
+    return $this->actif;
+    }
+
+    public function setActif(bool $actif): self
+    {
+    $this->actif = $actif;
+    return $this;
+    }
+
+
+    public function getPhoto(): ?string
+    {
+    return $this->photo;
+    }
+
+    public function setPhoto(?string $photo): self
+    {
+    $this->photo = $photo;
+    return $this;
+    }
+
+    public function getNote(): ?float
+    {
+    return $this->note;
+    }
+
+public function setNote(?float $note): self
+    {
+    $this->note = $note;
+    return $this;
     }
 }

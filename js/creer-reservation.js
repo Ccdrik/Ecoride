@@ -1,7 +1,7 @@
 import { getToken } from './auth/auth.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const container = document.getElementById("tableau-trajets");
+    const container = document.getElementById("tableau-trajets"); b
     if (!container) return;
 
     try {

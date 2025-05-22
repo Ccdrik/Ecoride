@@ -1,108 +1,121 @@
-// js/trajets_liste.js
-import {
-  isConnected,
-  getToken,
-  handle401,
-  showAndHideElementsForRoles
-} from "./auth/auth.js";
+// fichier js/trajets_liste.js
+import { getToken, handle401 } from "./auth/auth.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-  showAndHideElementsForRoles();
-  initTrajetsListePage();
-});
+export function initCovoituragesPage() {
+  const container = document.getElementById("resultats-trajets");
+  const API_URL = "http://127.0.0.1:8000/api";
 
-export async function initTrajetsListePage() {
-  const API_BASE_URL = "http://127.0.0.1:8000/api";
-  const container = document.getElementById("liste-trajets");
+  container.innerHTML = `<tr><td colspan="9">Chargement...</td></tr>`;
 
-  if (!container) {
-    console.warn("Conteneur #liste-trajets non trouvé");
-    return;
-  }
+  fetch(`${API_URL}/trajets`, {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  })
+    .then(res => {
+      if (!res.ok) throw new Error("Erreur API");
+      return res.json();
+    })
+    .then(data => {
+      container.innerHTML = "";
 
-  container.innerHTML = `<p class="text-muted">🔄 Chargement des trajets...</p>`;
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/trajets`, {
-      headers: {
-        Authorization: `Bearer ${getToken()}`
+      if (!Array.isArray(data) || data.length === 0) {
+        container.innerHTML = `<tr><td colspan="9">Aucun covoiturage trouvé.</td></tr>`;
+        return;
       }
-    });
 
-    if (handle401(res)) return;
-    if (!res.ok) throw new Error("Erreur lors du chargement des trajets");
+      data.forEach(trajet => {
+        const [date, heure] = trajet.dateDepart.split(" ");
+        const row = document.createElement("tr");
 
-    const data = await res.json();
-    const trajets = data["hydra:member"] || data;
+        row.innerHTML = `
+          <td>${trajet.villeDepart}</td>
+          <td>${trajet.villeArrivee}</td>
+          <td>${date}</td>
+          <td>${heure}</td>
+          <td>${trajet.nbPlaces}</td>
+          <td>${trajet.prix} crédits</td>
+          <td>${trajet.ecologique ? "🌱" : "🚗"}</td>
+          <td>${trajet.chauffeur?.email ?? "?"}</td>
+          <td>
+            <button class="btn btn-success btn-sm btn-reserver" data-id="${trajet.id}">Réserver</button>
+            <button class="btn btn-info btn-sm btn-detail" data-id="${trajet.id}">Détail</button>
+          </td>
+        `;
 
-    if (trajets.length === 0) {
-      container.innerHTML = `<p class="text-muted">Aucun trajet disponible pour le moment.</p>`;
-      return;
-    }
+        container.appendChild(row);
+      });
 
-    container.innerHTML = "";
+      document.querySelectorAll(".btn-reserver").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const trajetId = btn.dataset.id;
+          try {
+            const res = await fetch(`${API_URL}/reservations`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+              },
+              body: JSON.stringify({ trajetId })
+            });
 
-    trajets.forEach(trajet => {
-      const card = document.createElement("div");
-      card.className = "card mb-3";
+            const result = await res.json();
 
-      const placesRestantes = trajet.places - (trajet.reservations?.reduce((acc, r) => acc + r.places, 0) || 0);
-      const dejaReserve = trajet.reservations?.some(r => r.user.id === getUserId()) ?? false;
+            if (handle401(res)) return;
 
-      card.innerHTML = `
-                <div class="card-body">
-                    <h5 class="card-title">${trajet.villeDepart} → ${trajet.villeArrivee}</h5>
-                    <p class="card-text">📅 ${trajet.dateDepart}</p>
-                    <p class="card-text">🚘 ${placesRestantes} place(s) restante(s)</p>
-                    <p class="card-text">💶 ${trajet.prix} €</p>
-                    ${dejaReserve
-          ? `<button class="btn btn-secondary" disabled>Déjà réservé</button>`
-          : placesRestantes > 0
-            ? `<button class="btn btn-primary btn-reserver" data-trajet-id="${trajet.id}">Réserver</button>`
-            : `<button class="btn btn-danger" disabled>Complet</button>`
-        }
-                </div>
+            if (!res.ok) {
+              alert("❌ Réservation impossible : " + (result.message ?? "Erreur inconnue"));
+              return;
+            }
+
+            alert("✅ Réservation confirmée !");
+            btn.classList.replace("btn-success", "btn-secondary");
+            btn.textContent = "Réservé";
+            btn.disabled = true;
+
+          } catch (e) {
+            console.error(e);
+            alert("❌ Erreur technique");
+          }
+        });
+      });
+
+      document.querySelectorAll(".btn-detail").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const trajetId = btn.dataset.id;
+          try {
+            const res = await fetch(`${API_URL}/trajets/${trajetId}`, {
+              headers: {
+                Authorization: `Bearer ${getToken()}`
+              }
+            });
+
+            if (handle401(res)) return;
+
+            const trajet = await res.json();
+            const chauffeur = trajet.chauffeur ?? {};
+
+            const html = `
+              <p><strong>Nom :</strong> ${chauffeur.nom ?? "Non renseigné"}</p>
+              <p><strong>Email :</strong> ${chauffeur.email ?? "Non renseigné"}</p>
+              <p><strong>Fumeur accepté :</strong> ${trajet.fumeur ? "Oui" : "Non"}</p>
+              <p><strong>Animaux acceptés :</strong> ${trajet.animaux ? "Oui" : "Non"}</p>
             `;
 
-      container.appendChild(card);
-    });
+            document.getElementById("modal-detail-body").innerHTML = html;
 
-    // Boutons "Réserver"
-    document.querySelectorAll(".btn-reserver").forEach(button => {
-      button.addEventListener("click", async () => {
-        const trajetId = button.dataset.trajetId;
+            const modal = new bootstrap.Modal(document.getElementById("modalDetail"));
+            modal.show();
 
-        try {
-          const res = await fetch(`${API_BASE_URL}/reservations`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${getToken()}`
-            },
-            body: JSON.stringify({ trajetId })
-          });
-
-          const responseData = await res.json();
-
-          if (handle401(res)) return;
-          if (!res.ok) {
-            const msg = responseData.message || "Erreur lors de la réservation.";
-            alert("❌ " + msg);
-            return;
+          } catch (e) {
+            console.error(e);
+            alert("❌ Erreur lors du chargement des détails");
           }
-
-          alert("✅ Réservation confirmée !");
-          button.disabled = true;
-          button.textContent = "Réservé ✅";
-        } catch (error) {
-          console.error("Erreur de réservation :", error);
-          alert("❌ Erreur technique");
-        }
+        });
       });
+    })
+    .catch(err => {
+      console.error("Erreur fetch :", err);
+      container.innerHTML = `<tr><td colspan="9" class="text-danger text-center">Erreur lors du chargement</td></tr>`;
     });
-
-  } catch (error) {
-    console.error("Erreur globale :", error);
-    container.innerHTML = `<p class="text-danger">Erreur lors du chargement des trajets.</p>`;
-  }
 }
+
+export default initCovoituragesPage;

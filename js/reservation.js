@@ -1,7 +1,8 @@
-// js/reservation.js
 import { getToken } from './auth/auth.js';
 
-document.addEventListener("DOMContentLoaded", () => {
+export function initReservationPage() {
+    console.log("✅ Page réservation chargée");
+
     const bouton = document.getElementById("btn-reserver");
     const urlParams = new URLSearchParams(window.location.search);
     const trajetId = urlParams.get("id");
@@ -11,12 +12,11 @@ document.addEventListener("DOMContentLoaded", () => {
     bouton.addEventListener("click", async () => {
         const token = getToken();
         if (!token) {
-            alert("Vous devez être connecté pour réserver.");
-            window.location.href = "/pages/signin.html";
+            alert("❌ Vous devez être connecté pour réserver.");
+            window.location.href = "/signin"; // SPA route, pas page complète
             return;
         }
 
-        // Double confirmation
         const confirmation = confirm("Souhaitez-vous utiliser vos crédits pour réserver ce trajet ?");
         if (!confirmation) return;
 
@@ -28,23 +28,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    trajet: `/api/trajets/${trajetId}`
+                    trajetId: parseInt(trajetId), // Assure-toi que ton backend accepte bien ce champ
+                    placesReservees: 1
                 })
             });
 
+            const result = await response.json();
+
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error("Erreur de l'API :", errorData);
-                alert(errorData.message || "Erreur lors de la réservation.");
+                alert(result.error || "Erreur lors de la réservation.");
                 return;
             }
 
             alert("✅ Réservation confirmée !");
-            window.location.href = "/pages/mes_reservations.html";
-
+            window.location.href = "/mesreservations"; // redirige vers SPA
         } catch (error) {
-            console.error("Erreur :", error);
-            alert("Erreur lors de la réservation.");
+            console.error("Erreur JS :", error);
+            alert("Erreur de connexion ou serveur.");
         }
     });
-});
+}
+
+
+export default initReservationPage;

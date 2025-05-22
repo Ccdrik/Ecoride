@@ -1,40 +1,43 @@
-import { getToken } from './auth/auth.js';
+import { getToken, handle401 } from './auth/auth.js';
 
-document.addEventListener("DOMContentLoaded", async () => {
+export default function initReservationsPage() {
     const container = document.getElementById("tableau-reservations");
     if (!container) return;
 
-    try {
-        const token = getToken();
-        const userId = localStorage.getItem("userId");
-        if (!userId) throw new Error("Utilisateur non connecté");
+    fetch("http://127.0.0.1:8000/api/mes-reservations", {
+        headers: {
+            Authorization: `Bearer ${getToken()}`
+        }
+    })
+        .then(res => {
+            if (handle401(res)) return;
+            return res.json();
+        })
+        .then(data => {
+            container.innerHTML = "";
 
-        const response = await fetch(`http://localhost:8000/api/reservations?passager.id=${userId}`, {
-            headers: { Authorization: `Bearer ${token}` }
+            if (!Array.isArray(data) || data.length === 0) {
+                container.innerHTML = `<tr><td colspan="4">Aucune réservation trouvée.</td></tr>`;
+                return;
+            }
+
+            data.forEach(reservation => {
+                const trajet = reservation.trajet;
+                const row = document.createElement("tr");
+
+                const date = new Date(trajet.dateDepart).toLocaleDateString("fr-FR");
+
+                row.innerHTML = `
+                <td>${trajet.villeDepart}</td>
+                <td>${trajet.villeArrivee}</td>
+                <td>${date}</td>
+                <td>${reservation.nbPlacesReservees}</td>
+            `;
+                container.appendChild(row);
+            });
+        })
+        .catch(err => {
+            console.error("Erreur de chargement :", err);
+            container.innerHTML = `<tr><td colspan="4">Erreur lors du chargement</td></tr>`;
         });
-        if (!response.ok) throw new Error("Erreur récupération réservations");
-
-        const data = await response.json();
-        const reservations = data["hydra:member"] || data;
-
-        container.innerHTML = "";
-
-        reservations.forEach(reservation => {
-            const trajet = reservation.trajet;
-            const row = document.createElement("tr");
-            row.innerHTML = `
-        <td>${trajet.depart}</td>
-        <td>${trajet.arrivee}</td>
-        <td>${trajet.date_depart}</td>
-        <td>${trajet.heure_depart}</td>
-        <td>${trajet.nb_places}</td>
-        <td>${trajet.prix ?? '-'}</td>
-      `;
-            container.appendChild(row);
-        });
-
-    } catch (error) {
-        console.error(error);
-        alert(error.message);
-    }
-});
+}

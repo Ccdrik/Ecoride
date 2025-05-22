@@ -1,5 +1,4 @@
-// js/auth/signin.js
-import { setToken, setRole, clearAuthCookies } from "./auth.js";
+import { setToken, setRole, clearAuthCookies, showAndHideElementsForRoles } from "./auth.js";
 
 export function initSigninPage() {
     const mailInput = document.getElementById("EmailInput");
@@ -35,10 +34,7 @@ export function initSigninPage() {
             });
 
             if (!res.ok) {
-                const errorText = await res.text();
-                showMessage("Connexion échouée : " + errorText);
-                mailInput.classList.add("is-invalid");
-                passwordInput.classList.add("is-invalid");
+                showMessage("Connexion échouée.");
                 return;
             }
 
@@ -50,43 +46,34 @@ export function initSigninPage() {
 
             setToken(result.token);
 
+            // Appel à /api/me pour récupérer les rôles
             const meRes = await fetch("http://127.0.0.1:8000/api/me", {
-                headers: {
-                    Authorization: `Bearer ${result.token}`,
-                    Accept: "application/json"
-                }
+                headers: { Authorization: `Bearer ${result.token}` }
             });
 
-            if (meRes.status === 401) {
-                clearAuthCookies();
-                showMessage("Session expirée. Veuillez vous reconnecter.");
-                return;
-            }
-
             const user = await meRes.json();
-            if (!user || user.error) {
-                showMessage("Impossible de récupérer vos informations.");
-                return;
-            }
 
             const roles = user.roles || [];
-            let mainRole = "utilisateur";
-            if (roles.includes("ROLE_ADMIN")) mainRole = "admin";
-            else if (roles.includes("ROLE_EMPLOYE")) mainRole = "employe";
-            else if (roles.includes("ROLE_PASSAGER") && roles.includes("ROLE_CHAUFFEUR")) mainRole = "passager_chauffeur";
-            else if (roles.includes("ROLE_CHAUFFEUR")) mainRole = "chauffeur";
-            else if (roles.includes("ROLE_PASSAGER")) mainRole = "passager";
+            let role = "utilisateur";
+            if (roles.includes("ROLE_ADMIN")) role = "admin";
+            else if (roles.includes("ROLE_EMPLOYE")) role = "employe";
+            else if (roles.includes("ROLE_CHAUFFEUR") && roles.includes("ROLE_PASSAGER")) role = "chauffeur"; // ou autre logique
+            else if (roles.includes("ROLE_CHAUFFEUR")) role = "chauffeur";
+            else if (roles.includes("ROLE_PASSAGER")) role = "passager";
 
-            setRole(mainRole);
-            showMessage("Connexion réussie ! Redirection...", "success");
+            setRole(role);
+            showAndHideElementsForRoles(); // ✅ met à jour les boutons dans la navbar
+            showMessage("Connexion réussie !", "success");
 
+            // Redirection SPA (sans recharger la page)
             setTimeout(() => {
-                window.location.replace("/");
-            }, 1500);
+                window.history.pushState({}, "", "/");
+                dispatchEvent(new PopStateEvent("popstate"));
+            }, 1000);
 
         } catch (err) {
             console.error("Erreur JS:", err);
-            showMessage("Erreur de connexion ou serveur injoignable.");
+            showMessage("Erreur de connexion.");
         }
     });
 }
@@ -95,8 +82,4 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("signin-form")) {
         initSigninPage();
     }
-
 });
-
-
-

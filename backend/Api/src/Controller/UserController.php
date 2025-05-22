@@ -17,13 +17,14 @@ class UserController extends AbstractController
         $users = $userRepository->findAll();
         $data = [];
         foreach ($users as $user) {
-            $data[] = [
-                'id' => $user->getId(),
-                'pseudo' => $user->getPseudo(),
-                'email' => $user->getEmail(),
-                'credits' => $user->getCredits(),
-                // ... autres informations que tu souhaites exposer
-            ];
+           $data[] = [
+    'id' => $user->getId(),
+    'pseudo' => $user->getPseudo(),
+    'email' => $user->getEmail(),
+    'credits' => $user->getCredits(),
+    'roles' => $user->getRoles(),
+    'actif' => $user->isActif(),
+];
         }
 
         return new JsonResponse($data);
@@ -43,19 +44,26 @@ class UserController extends AbstractController
         return new JsonResponse(['available' => !$user]);
     }
 
-    #[Route('/api/check-pseudo', name: 'api_check_pseudo', methods: ['GET'])]
-    public function checkPseudo(UserRepository $userRepository, Request $request): JsonResponse
-    {
-        $pseudo = $request->query->get('pseudo');
+    
+#[Route('/api/check-pseudo', name: 'api_check_pseudo', methods: ['GET'])]
+public function checkPseudo(Request $request, UserRepository $userRepository): JsonResponse
+{
+    $pseudo = $request->query->get('pseudo');
 
-        if (!$pseudo) {
-            return new JsonResponse(['error' => 'Pseudo manquant'], 400);
-        }
-
-        $user = $userRepository->findOneBy(['pseudo' => $pseudo]);
-
-        return new JsonResponse(['available' => !$user]);
+    if (!$pseudo || !is_string($pseudo)) {
+        return new JsonResponse(['error' => 'Pseudo manquant ou invalide'], 400);
     }
+
+    try {
+        $user = $userRepository->findOneBy(['pseudo' => $pseudo]);
+        return new JsonResponse(['available' => !$user]);
+    } catch (\Throwable $e) {
+        return new JsonResponse([
+            'error' => 'Erreur serveur',
+            'details' => $e->getMessage()
+        ], 500);
+    }
+}
 
     #[Route('/api/users/{id}/suspend', name: 'api_user_suspend', methods: ['PUT'])]
     public function suspendUser(UserRepository $userRepository, EntityManagerInterface $em, int $id): JsonResponse
@@ -70,4 +78,7 @@ class UserController extends AbstractController
 
         return new JsonResponse(['success' => 'Utilisateur suspendu']);
     }
+
+
+    
 }

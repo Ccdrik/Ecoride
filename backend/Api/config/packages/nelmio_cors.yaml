@@ -1,13 +1,16 @@
 nelmio_cors:
     defaults:
-        allow_origin: ['http://127.0.0.1:5500']
-        allow_credentials: true
-        allow_headers: ['Content-Type', 'Authorization']
+        allow_origin: ['http://127.0.0.1:5500'] # ← uniquement ton front SPA
         allow_methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-        expose_headers: ['Link']
+        allow_headers: ['Content-Type', 'Authorization']
+        expose_headers: ['Content-Type', 'Authorization']
+        allow_credentials: true
         max_age: 3600
     paths:
         '^/api/':
             allow_origin: ['http://127.0.0.1:5500']
-            allow_headers: ['Content-Type', 'Authorization']
             allow_methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+            allow_headers: ['Content-Type', 'Authorization']
+            expose_headers: ['Content-Type', 'Authorization']
+            allow_credentials: true
+            max_age: 3600
