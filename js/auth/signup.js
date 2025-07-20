@@ -1,13 +1,12 @@
 import { setToken, setRole } from "./auth.js";
 
-console.log("✅ signup.js chargé");
 
 export function initSignupPage() {
     const form = document.getElementById("formulaire-inscription");
     const messageDiv = document.getElementById("signup-message");
 
     if (!form || !messageDiv) {
-        console.error("❌ Formulaire ou message non trouvé");
+        console.error(" Formulaire ou message non trouvé");
         return;
     }
 
@@ -52,7 +51,7 @@ export function initSignupPage() {
             });
 
             const raw = await res.text(); // On prend le texte brut pour déboguer si besoin
-            console.log("🔁 Réponse brute signup :", raw);
+            console.log(" Réponse brute signup :", raw);
 
             const result = JSON.parse(raw);
 
@@ -69,7 +68,7 @@ export function initSignupPage() {
             }
 
         } catch (e) {
-            console.error("❌ Erreur réseau ou serveur :", e);
+            console.error(" Erreur réseau ou serveur :", e);
             showMessage("Erreur serveur, veuillez réessayer plus tard.");
         }
     });

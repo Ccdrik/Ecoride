@@ -1,4 +1,3 @@
-// ✅ allRoutes.js — corrigé (chemins JS sans "/" en tête)
 import Route from "./Route.js";
 
 export const allRoutes = [
