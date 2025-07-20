@@ -37,3 +37,6 @@ build/
 
 # Cache ou migration résiduels
 /backend/Api/migrations/*.php~
+
+/var/
+
