@@ -3,14 +3,14 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
 class MainController extends AbstractController
 {
-    #[Route('/', name: 'home')]
-    public function index(): Response
+    #[Route('/', name: 'home', methods: ['GET'])]
+    public function index(): JsonResponse
     {
-        return new Response('<h1>Bienvenue sur EcoRide!</h1>');
+        return new JsonResponse(['message' => 'Bienvenue sur EcoRide']);
     }
 }

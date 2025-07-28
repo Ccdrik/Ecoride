@@ -3,30 +3,22 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class SecurityController extends AbstractController
 {
-    #[Route('/api/signin', name: 'api_signin', methods: ['POST'])]
-    public function signin(#[CurrentUser] ?UserInterface $user): JsonResponse
+    #[Route('/api/me', name: 'api_me', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function me(): JsonResponse
     {
-        if (!$user) {
-            return $this->json([
-                'success' => false,
-                'error' => 'Identifiants invalides',
-            ], 401);
-        }
+        $user = $this->getUser();
 
-        return $this->json([
-            'success' => true,
-            'user' => [
-                'id' => $user->getId(),
-                'email' => $user->getEmail(),
-                'roles' => $user->getRoles(),
-            ],
+        return new JsonResponse([
+            'id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'roles' => $user->getRoles()
         ]);
     }
 }

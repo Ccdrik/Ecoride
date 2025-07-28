@@ -4,44 +4,30 @@ namespace App\Controller;
 
 use App\Entity\Preference;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('ROLE_USER')]
 class PreferenceController extends AbstractController
 {
-    public function __construct(private EntityManagerInterface $em) {}
-
-    #[Route('/api/preferences', name: 'api_preferences_save', methods: ['POST'])]
-    public function savePreferences(Request $request): JsonResponse
+    #[Route('/api/preferences', name: 'update_preferences', methods: ['POST'])]
+    public function updatePreferences(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $user = $this->getUser();
-        if (!$user) {
-            return new JsonResponse(['error' => 'Non connecté'], 401);
-        }
-
         $data = json_decode($request->getContent(), true);
-        if (!$data) {
-            return new JsonResponse(['error' => 'Aucune donnée reçue'], 400);
-        }
 
-        // ⚠️ Vérifie si une préférence existe déjà pour cet utilisateur
-        $preference = $this->em->getRepository(Preference::class)->findOneBy(['utilisateur' => $user]);
-        if (!$preference) {
-            $preference = new Preference();
-            $preference->setUtilisateur($user);
-        }
+        $pref = $em->getRepository(Preference::class)->findOneBy(['utilisateur' => $user]) ?? new Preference();
+        $pref->setUtilisateur($user);
+        $pref->setFumeur((bool) ($data['fumeur'] ?? false));
+        $pref->setAnimaux((bool) ($data['animaux'] ?? false));
+        $pref->setMusique((bool) ($data['musique'] ?? false));
 
-        // ✅ Mise à jour des données
-        $preference->setFumeur((bool)($data['fumeur'] ?? false));
-        $preference->setAnimaux((bool)($data['animaux'] ?? false));
-        $preference->setMusique((bool)($data['musique'] ?? false));
-        $preference->setAutres($data['autres'] ?? '');
+        $em->persist($pref);
+        $em->flush();
 
-        $this->em->persist($preference);
-        $this->em->flush();
-
-        return new JsonResponse(['success' => 'Préférences enregistrées avec succès']);
+        return new JsonResponse(['message' => 'Préférences mises à jour']);
     }
 }
