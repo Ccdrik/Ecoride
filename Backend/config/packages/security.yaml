@@ -1,0 +1,43 @@
+security:  # Configuration de sécurité pour l'API
+    password_hashers:  # Définit les algorithmes de hachage pour les mots de passe
+        App\Entity\User:  # Classe User
+            algorithm: auto
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: auto
+
+    providers: # Définit le fournisseur d'utilisateurs
+        app_user_provider:
+            entity:  # Utilise l'entité User pour récupérer les utilisateurs
+                class: App\Entity\User
+                property: email   # Utilisation de l'email comme identifiant
+
+    firewalls:  # Définit les firewalls pour l'API
+        dev:  
+            pattern: ^/(_(profiler|wdt)|css|images|js)/  # Routes de développement
+            security: false  
+
+        main:  # Firewall principal pour l'API
+            pattern: ^/api
+            stateless: true         # Pas de session, chaque requête est indépendante
+            provider: app_user_provider 
+
+            json_login: # Authentification par JSON
+                check_path: /api/signin  # Chemin pour la connexion
+                username_path: email   
+                password_path: password       
+                success_handler: lexik_jwt_authentication.handler.authentication_success     
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+            jwt: ~  # Utilisation de JWT pour l'authentification
+
+    access_control:
+        #  Routes publiques
+        - { path: ^/api/signup, roles: PUBLIC_ACCESS }
+        - { path: ^/api/signin, roles: PUBLIC_ACCESS }
+        - { path: ^/api/check-email, roles: PUBLIC_ACCESS }
+        - { path: ^/api/check-pseudo, roles: PUBLIC_ACCESS }
+
+        #  Admin uniquement
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
+
+        #Toutes les autres routes API nécessitent un token JWT valide
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
