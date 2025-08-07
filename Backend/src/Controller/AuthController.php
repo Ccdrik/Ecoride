@@ -9,37 +9,66 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+
 
 class AuthController extends AbstractController
 {
     #[Route('/api/signup', name: 'api_signup', methods: ['POST'])]
-    public function signup(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $hasher): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
+public function signup(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $hasher, ValidatorInterface $validator): JsonResponse
 
-        if (empty($data['email']) || empty($data['password']) || empty($data['pseudo'])) {
-            return new JsonResponse(['error' => 'Champs requis manquants'], 400);
-        }
+{
+    $data = json_decode($request->getContent(), true);
 
-        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            return new JsonResponse(['error' => 'Email invalide'], 400);
-        }
-
-        if (strlen($data['password']) < 8) {
-            return new JsonResponse(['error' => 'Mot de passe trop court (min 8 caractères)'], 400);
-        }
-
-        $user = new User();
-        $user->setEmail($data['email']);
-        $user->setPseudo($data['pseudo']);
-        $user->setRoles(['ROLE_USER']);
-        $user->setPassword($hasher->hashPassword($user, $data['password']));
-
-        $em->persist($user);
-        $em->flush();
-
-        return new JsonResponse(['message' => 'Utilisateur créé', 'id' => $user->getId()], 201);
+    // Vérification des champs requis
+    if (
+        empty($data['nom']) ||
+        empty($data['prenom']) ||
+        empty($data['pseudo']) ||
+        empty($data['email']) ||
+        empty($data['password']) ||
+        empty($data['confirmpassword']) ||
+        empty($data['roles'])
+    ) {
+        return new JsonResponse(['error' => 'Tous les champs sont requis'], 400);
     }
+
+
+    if ($data['password'] !== $data['confirmpassword']) {
+        return new JsonResponse(['error' => 'Les mots de passe ne correspondent pas'], 400);
+    }
+
+    if ($em->getRepository(User::class)->findOneBy(['email' => $data['email']])) {
+    return new JsonResponse(['error' => 'Email déjà utilisé'], 400);
+}
+
+if ($em->getRepository(User::class)->findOneBy(['pseudo' => $data['pseudo']])) {
+    return new JsonResponse(['error' => 'Pseudo déjà utilisé'], 400);
+}
+
+    $user = new User();
+    $user->setNom($data['nom']);
+    $user->setPrenom($data['prenom']);
+    $user->setPseudo($data['pseudo']);
+    $user->setEmail($data['email']);
+    $user->setRoles($data['roles']);
+
+    $user->setPassword($data['password']);
+    $errors = $validator->validate($user);
+    if (count($errors) > 0) {
+    $messages = [];
+    foreach ($errors as $error) {
+        $messages[] = $error->getMessage();
+    }
+    return new JsonResponse(['errors' => $messages], 400);
+}
+$user->setPassword($hasher->hashPassword($user, $data['password']));
+
+    $em->persist($user);
+    $em->flush();
+
+    return new JsonResponse(['message' => 'Utilisateur créé', 'id' => $user->getId()], 201);
+}
 
     #[Route('/api/check-email/{email}', name: 'api_check_email', methods: ['GET'])]
     public function checkEmail(string $email, EntityManagerInterface $em): JsonResponse
