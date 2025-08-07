@@ -1,0 +1,39 @@
+# === SYSTÈME & ÉDITEURS ===
+.DS_Store
+Thumbs.db
+*.swp
+*.log
+.vscode/
+.idea/
+
+# === FICHIERS D'ENVIRONNEMENT GLOBAUX ===
+.env
+.env.local
+.env.*
+filtered_logs.txt
+
+# === FRONT-END (dossier Frontend/) ===
+/Frontend/node_modules/
+/Frontend/package-lock.json
+/Frontend/yarn.lock
+/Frontend/dist/
+/Frontend/build/
+/Frontend/.env
+/Frontend/.env.local
+/Frontend/.DS_Store
+
+# === BACKEND SYMFONY (dossier Backend/) ===
+/Backend/vendor/
+/Backend/var/
+/Backend/.env
+/Backend/.env.local
+/Backend/.env.*
+/Backend/.DS_Store
+/Backend/public/bundles/
+/Backend/public/build/
+/Backend/migrations/*.php~
+
+# === DIVERS & DOCKER ===
+*.pid
+Dockerfile~
+docker-compose.override.yml
