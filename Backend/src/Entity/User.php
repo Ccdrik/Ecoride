@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -18,15 +19,40 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom est requis.")]
+    #[Assert\Regex(
+    pattern: "/^[a-zA-ZÀ-ÿ -]+$/",
+    message: "Le nom ne doit contenir que des lettres et des traits d'union."
+    )]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le prénom est requis.")]
+    #[Assert\Regex(
+    pattern: "/^[a-zA-ZÀ-ÿ -]+$/",
+    message: "Le prénom ne doit contenir que des lettres et des traits d'union."
+    )]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 180, unique: true)]
+    #[Assert\NotBlank(message: "L'email est requis.")]
+    #[Assert\Email(
+    message: "L'adresse email '{{ value }}' n'est pas valide.",
+    mode: "html5"
+    )]
+    #[Assert\Regex(
+    pattern: "/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/",
+    message: "Format d'email invalide (exemple : nom@domaine.com)."
+    )]
     private ?string $email = null;
 
     #[ORM\Column(length: 255, unique: true)]
+    #[Assert\NotBlank(message: "Le pseudo est requis.")]
+    #[Assert\Length(min: 3, max: 20, minMessage: "Le pseudo doit contenir au moins 3 caractères.")]
+    #[Assert\Regex(
+    pattern: "/^[a-zA-Z0-9_.-]+$/",
+    message: "Le pseudo ne doit contenir que des lettres, chiffres, tirets, points ou underscores."
+    )]
     private ?string $pseudo = null;
 
 
@@ -34,6 +60,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private array $roles = [];
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le mot de passe est requis.")]
+    #[Assert\Regex(
+    pattern: "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/",
+    message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial."
+    )]
     private ?string $password = null;
 
     #[ORM\Column(type: "integer")]
@@ -54,7 +85,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     // Relation OneToMany vers Reservation avec mappedBy 'user'
     #[ORM\OneToMany(mappedBy: 'passager', targetEntity: Reservation::class, orphanRemoval: true)]
-private Collection $reservations;
+
 
     public function __construct()
     {
