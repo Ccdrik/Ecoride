@@ -1,28 +1,23 @@
-# Étape 1 : Installer Composer dans un conteneur temporaire
-FROM composer:latest AS composer_stage
+FROM php:8.2-cli
 
-# Étape 2 : Image finale Symfony avec Apache
-FROM php:8.2-apache
-
-# Install dépendances PHP et OS
+# Installer les dépendances système + extensions PHP nécessaires
 RUN apt-get update && apt-get install -y \
-    git unzip zip libicu-dev libpq-dev libzip-dev libonig-dev \
-    && docker-php-ext-install intl pdo pdo_mysql zip
+    git unzip zip curl libpq-dev libonig-dev libxml2-dev libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql
 
-# Activer mod_rewrite pour Symfony
-RUN a2enmod rewrite
+# Installer Composer manuellement (plus stable que via image "composer")
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copier Composer depuis l'étape 1
-COPY --from=composer_stage /usr/bin/composer /usr/bin/composer
+# Définir le dossier de travail
+WORKDIR /app
 
-# Dossier de travail Symfony
-WORKDIR /var/www/html
+# Copier uniquement composer.* d'abord pour profiter du cache Docker
+COPY ./composer.json ./composer.lock /app/
 
-# Copier les fichiers Symfony dans le conteneur
-COPY . .
+# Installer les dépendances PHP
+RUN composer install --no-interaction
 
-# Donne les bons droits
-RUN chown -R www-data:www-data /var/www/html/var /var/www/html/vendor
+# Puis copier le reste du projet Symfony
+COPY . /app
 
-# Exposer le port Apache
-EXPOSE 80
+# Port non exposé : Symfony CLI va écouter via le docker-compose

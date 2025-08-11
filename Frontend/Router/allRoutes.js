@@ -19,8 +19,7 @@ export const allRoutes = [
     // Réservations
     new Route("/reservations", "Mes réservations", "/pages/reservations.html", ["passager", "chauffeur"], "js/mes-reservations.js"),
 
-
-    // Véhicule
+    //  Véhicule 
     new Route("/voiture", "Ajouter un véhicule", "/pages/voiture.html", ["chauffeur"], "js/voiture.js"),
 
     // Admin
@@ -30,17 +29,15 @@ export const allRoutes = [
     // Employé
     new Route("/employe", "Espace Employés", "/pages/employe.html", ["employe"], "js/employe.js"),
 
-    //Utilisateur
+    // Utilisateur
     new Route("/utilisateur", "Espace Utilisateur", "/pages/utilisateur.html", ["passager"], "js/utilisateur.js"),
     new Route("/preferences", "Préférences", "/pages/preferences.html", ["passager", "chauffeur"], "js/preferences.js"),
-
-
 
     // Autres
     new Route("/contact", "Contact", "/pages/contact.html", [], "js/contact.js"),
     new Route("/mentionslegales", "Mentions légales", "/pages/mentionslegales.html", []),
 
-    // Optionnel : route 404
+    // 404
     new Route("/404", "Page introuvable", "/pages/404.html", [])
 ];
 

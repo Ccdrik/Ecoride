@@ -1,43 +1,49 @@
-security:  # Configuration de sécurité pour l'API
-    password_hashers:  # Définit les algorithmes de hachage pour les mots de passe
-        App\Entity\User:  # Classe User
-            algorithm: auto
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: auto
+security:
+  password_hashers:
+    App\Entity\User:
+      algorithm: auto
+    Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: auto
 
-    providers: # Définit le fournisseur d'utilisateurs
-        app_user_provider:
-            entity:  # Utilise l'entité User pour récupérer les utilisateurs
-                class: App\Entity\User
-                property: email   # Utilisation de l'email comme identifiant
+  providers:
+    app_user_provider:
+      entity:
+        class: App\Entity\User
+        property: email
 
-    firewalls:  # Définit les firewalls pour l'API
-        dev:  
-            pattern: ^/(_(profiler|wdt)|css|images|js)/  # Routes de développement
-            security: false  
+  firewalls:
+    dev:
+      pattern: ^/(_(profiler|wdt)|css|images|js)/
+      security: false
 
-        main:  # Firewall principal pour l'API
-            pattern: ^/api
-            stateless: true         # Pas de session, chaque requête est indépendante
-            provider: app_user_provider 
+    # Firewall principal pour l'API
+    main:
+      pattern: ^/api
+      stateless: true
+      provider: app_user_provider
 
-            json_login: # Authentification par JSON
-                check_path: /api/signin  # Chemin pour la connexion
-                username_path: email   
-                password_path: password       
-                success_handler: lexik_jwt_authentication.handler.authentication_success     
-                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+      # Login JSON → /api/signin
+      json_login:
+        check_path: /api/signin
+        username_path: email
+        password_path: password
+        success_handler: lexik_jwt_authentication.handler.authentication_success
+        failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-            jwt: ~  # Utilisation de JWT pour l'authentification
+      # Authentification par JWT pour le reste
+      jwt: ~
 
-    access_control:
-        #  Routes publiques
-        - { path: ^/api/signup, roles: PUBLIC_ACCESS }
-        - { path: ^/api/signin, roles: PUBLIC_ACCESS }
-        - { path: ^/api/check-email, roles: PUBLIC_ACCESS }
-        - { path: ^/api/check-pseudo, roles: PUBLIC_ACCESS }
+  access_control:
+    # ✅ IMPORTANT : autoriser le préflight CORS (OPTIONS) en premier
+    - { path: ^/api, methods: [OPTIONS], roles: PUBLIC_ACCESS }
 
-        #  Admin uniquement
-        - { path: ^/api/admin, roles: ROLE_ADMIN }
+    # ✅ Endpoints publics
+    - { path: ^/api/signup, roles: PUBLIC_ACCESS }
+    - { path: ^/api/signin, roles: PUBLIC_ACCESS }
+    - { path: ^/api/check-email, roles: PUBLIC_ACCESS }
+    - { path: ^/api/check-pseudo, roles: PUBLIC_ACCESS }
 
-        #Toutes les autres routes API nécessitent un token JWT valide
-        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+    # 🔒 Admin
+    - { path: ^/api/admin, roles: ROLE_ADMIN }
+
+    # 🔒 Tout le reste de l'API requiert un JWT valide
+    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
