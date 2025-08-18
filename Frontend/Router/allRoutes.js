@@ -1,7 +1,7 @@
 import Route from "./Route.js";
 
 export const allRoutes = [
-    new Route("/", "Accueil", "/pages/home.html", [], "js/script.js"),
+    new Route("/", "Accueil", "/pages/home.html", [], "js/home-trajets.js"),
 
     // Authentification
     new Route("/signin", "Connexion", "/pages/auth/signin.html", [], "js/auth/signin.js"),

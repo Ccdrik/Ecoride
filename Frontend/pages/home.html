@@ -1,72 +1,67 @@
 <div class="scene-content text-center">
     <h1>Voyager vert avec EcoRide !</h1>
-    <div class="hero-scene">
-
-    </div>
-    <div class="hero-scene-content">
-
-    </div>
+    <div class="hero-scene"></div>
+    <div class="hero-scene-content"></div>
 </div>
 
-<form id="form-recherche" class="table-style my-4">
+<!-- Formulaire recherche -->
+<form id="form-recherche" class="table-style my-4 p-3">
     <div class="mb-3 text-center">
         <h2>🔍 Rechercher un trajet</h2>
     </div>
 
-    <div class="input-group mb-3">
+    <!-- Départ -->
+    <div class="input-group mb-3 position-relative">
         <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
-        <input class="form-control" type="text" id="depart" name="depart" required placeholder="Départ">
+        <input class="form-control" type="text" id="depart" name="depart" required placeholder="Ville de départ">
+        <input type="hidden" id="home_depart_lat">
+        <input type="hidden" id="home_depart_lng">
+        <div id="home_depart_suggestions" class="list-group position-absolute w-100"
+            style="z-index:1000; top:100%; left:0;"></div>
     </div>
 
 
-    <div class="input-group mb-3">
+    <!-- Arrivée -->
+    <div class="input-group mb-3 position-relative">
         <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
-        <input class="form-control" type="text" id="arrivee" name="arrivee" required placeholder="Arrivée">
+        <input class="form-control" type="text" id="arrivee" name="arrivee" required placeholder="Ville d’arrivée">
+        <input type="hidden" id="home_arrivee_lat">
+        <input type="hidden" id="home_arrivee_lng">
+        <div id="home_arrivee_suggestions" class="list-group position-absolute w-100"
+            style="z-index:1000; top:100%; left:0;"></div>
     </div>
 
-
-    <div class="mb-3">
+    <!-- Date -->
+    <div class="input-group mb-3">
+        <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
         <input class="form-control" type="date" id="date" name="date" required>
     </div>
 
+    <!-- Bouton -->
     <div class="text-center">
-        <button type="submit" class="btn btn-primary">Rechercher</button>
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-search"></i> Rechercher
+        </button>
     </div>
 
-    <div class="mt-4">
-        <h2 class="text-center">🚗 Liste des trajets disponibles</h2>
-        <div id="liste-trajets" class="row mt-4 gy-4"></div>
-        <div id="message-aucun-resultat" class="alert alert-warning d-none text-center mt-4">
-            Aucun trajet trouvé. Essayez une autre date.
-        </div>
+    <!-- Résultats -->
 
-    </div>
 </form>
 
+<!-- Présentation -->
 <section class="presentation container my-5 text-center">
     <h3>🌱 Présentation de l’entreprise EcoRide</h3>
     <p>
         EcoRide est une jeune startup française engagée dans la transition écologique, née de la volonté de repenser la
         mobilité quotidienne.
-        Fondée en 2025, notre mission est de réduire l’impact environnemental des déplacements en mettant en avant une
-        solution simple, efficace
-        et économique : le covoiturage entre particuliers.
     </p>
     <img src="../Images/Start-up Eco.jpg" class="img-fluid my-3" alt="Startup EcoRide">
     <p>
         Spécialisée exclusivement dans les trajets en voiture, notre plateforme facilite la mise en relation de
         conducteurs et de passagers.
-        Que ce soit pour des trajets quotidiens ou occasionnels, EcoRide encourage une mobilité plus responsable et
-        solidaire.
     </p>
     <img src="../Images/Voiture eco.jpg" class="img-fluid my-3" alt="Voiture écologique">
     <p>
-        💡 Notre ambition : devenir la plateforme de référence du covoiturage écologique en France et en Europe.<br><br>
-        🧑‍💻 Projet porté par José et son équipe de développeurs passionnés.<br><br>
-        🌍 En rejoignant EcoRide, vous participez à :<br>
-        - La réduction des émissions de CO₂<br>
-        - La diminution du trafic routier<br>
-        - Une économie de transport plus accessible<br><br>
-        Rejoignez le mouvement EcoRide et transformons ensemble nos trajets en un geste pour la planète !
+        💡 Notre ambition : devenir la plateforme de référence du covoiturage écologique en France et en Europe.
     </p>
 </section>

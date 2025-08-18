@@ -1,5 +1,5 @@
 import { setToken, setRole } from "./auth.js";
-import { showLoader, hideLoader } from "../utils/loader.js"; // ✅ loader global
+import { showLoader, hideLoader } from "../loader.js"; // ✅ loader global
 
 export function initSignupPage() {
     const form = document.getElementById("formulaire-inscription");

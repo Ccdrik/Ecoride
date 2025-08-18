@@ -1,5 +1,5 @@
 import { getToken, showAndHideElementsForRoles, handle401 } from "./auth.js";
-import { showLoader, hideLoader } from "../utils/loader.js";
+import { showLoader, hideLoader } from "../loader.js";
 
 export function initAccountPage() {
     console.log("✅ initAccountPage appelé !");

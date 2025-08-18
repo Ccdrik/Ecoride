@@ -8,14 +8,10 @@ if (window.location.pathname === "/index.html") {
 
 const route404 = new Route("/404", "Page introuvable", "/pages/404.html");
 
-const getRouteByUrl = (url) => {
-    return allRoutes.find(route => route.url === url) || route404;
-};
+const getRouteByUrl = (url) => allRoutes.find(route => route.url === url) || route404;
 
 const LoadContentPage = async () => {
     const rawPath = window.location.pathname;
-
-    // 🚀 Nettoyer l'URL : si index.html est dans le chemin, le raccourcir
     const cleanedPath = window.location.pathname.replace("/Frontend", "") || "/";
 
     console.log("➡️ URL demandée :", rawPath);
@@ -39,18 +35,24 @@ const LoadContentPage = async () => {
 
         if (actualRoute.pathJS) {
             try {
-                const module = await import(`../${actualRoute.pathJS}`);
-                console.log("📦 Module chargé :", actualRoute.pathJS);
+                // Support 1 ou plusieurs scripts par route
+                const jsFiles = Array.isArray(actualRoute.pathJS) ? actualRoute.pathJS : [actualRoute.pathJS];
 
-                if (typeof module.initSigninPage === "function") module.initSigninPage();
-                else if (typeof module.initSignupPage === "function") module.initSignupPage();
-                else if (typeof module.initAccountPage === "function") module.initAccountPage();
-                else if (typeof module.initHomePage === "function") module.initHomePage();
-                else if (typeof module.initCovoituragesPage === "function") module.initCovoituragesPage();
-                else if (typeof module.initVoiturePage === "function") module.initVoiturePage();
-                else if (typeof module.default === "function") module.default();
-                else console.warn("⚠️ Aucun point d’entrée JS trouvé dans :", actualRoute.pathJS);
+                for (const jsFile of jsFiles) {
+                    const module = await import(`../${jsFile}`);
+                    console.log("📦 Module chargé :", jsFile);
 
+                    // Priorité aux points d'entrée nommés si présents
+                    if (typeof module.initSigninPage === "function") module.initSigninPage();
+                    else if (typeof module.initSignupPage === "function") module.initSignupPage();
+                    else if (typeof module.initAccountPage === "function") module.initAccountPage();
+                    else if (typeof module.initHomePage === "function") module.initHomePage();
+                    else if (typeof module.initCovoituragesPage === "function") module.initCovoituragesPage();
+                    else if (typeof module.initVoiturePage === "function") module.initVoiturePage();
+                    else if (typeof module.initRecherchePage === "function") module.initRecherchePage(); // 👈 utile si ton module exporte cette fonction
+                    else if (typeof module.default === "function") module.default(); // fallback sur export default
+                    else console.warn("⚠️ Aucun point d’entrée JS trouvé dans :", jsFile);
+                }
             } catch (err) {
                 console.error("❌ Erreur import JS :", err);
             }
@@ -66,6 +68,7 @@ const LoadContentPage = async () => {
     }
 };
 
+// Navigation SPA
 document.addEventListener("click", (e) => {
     const link = e.target.closest("a[data-link]");
     if (link) {
@@ -77,4 +80,5 @@ document.addEventListener("click", (e) => {
 
 window.onpopstate = LoadContentPage;
 
+// Chargement initial
 LoadContentPage();

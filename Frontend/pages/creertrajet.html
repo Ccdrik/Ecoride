@@ -1,67 +1,79 @@
 <div class="scene-content text-center">
     <h1>Voyager vert avec EcoRide !</h1>
-    <div class="hero-scene">
-
-    </div>
-    <div class="hero-scene-content">
-
-    </div>
+    <div class="hero-scene"></div>
+    <div class="hero-scene-content"></div>
 </div>
 
-
+<!-- Message d'erreur -->
 <div id="error-message" class="alert alert-danger d-none text-center"></div>
-<form action="covoiturages.html" method="GET" class="table-center" id="createTrajetForm">
+<!-- Message de succès -->
+<div id="trajet-alert" class="alert alert-success d-none text-center"></div>
+
+<form id="createTrajetForm" class="table-center">
     <div class="table-style">
         <div class="mt-3">
-            <h2 class="text-center ">Créer mon trajet</h2>
+            <h2 class="text-center">Créer mon trajet</h2>
         </div>
 
-
-        <div class="input-group mb-3">
+        <!-- Départ -->
+        <div class="input-group mb-3 position-relative">
             <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
-            <input class="form-control" type="text" id="depart" name="depart" list="depart-suggestions"
-                autocomplete="off" required placeholder="Départ">
-            <datalist id="depart-suggestions"></datalist>
+            <input id="depart" name="depart" type="text" class="form-control" placeholder="Départ" autocomplete="off"
+                required>
+            <input type="hidden" id="depart_lat" name="depart_lat">
+            <input type="hidden" id="depart_lng" name="depart_lng">
+            <div id="depart_suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index:1000;">
+            </div>
         </div>
 
-
-
-        <div class="input-group mb-3">
+        <!-- Arrivée -->
+        <div class="input-group mb-3 position-relative">
             <span class="input-group-text"><i class="bi bi-geo-alt-fill"></i></span>
-            <input class="form-control" type="text" id="arrivee" name="arrivee" list="arrivee-suggestions"
-                autocomplete="off" required placeholder="Arrivée">
-            <datalist id="arrivee-suggestions"></datalist>
+            <input id="arrivee" name="arrivee" type="text" class="form-control" placeholder="Arrivée" autocomplete="off"
+                required>
+            <input type="hidden" id="arrivee_lat" name="arrivee_lat">
+            <input type="hidden" id="arrivee_lng" name="arrivee_lng">
+            <div id="arrivee_suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index:1000;">
+            </div>
         </div>
 
-
+        <!-- Date -->
         <div class="mb-3">
-            <input class="form-control" type="date" id="date" name="date" required placeholder="Date">
+            <input id="date" name="date" type="date" class="form-control" required>
         </div>
 
+        <!-- Heure -->
         <div class="mb-3">
-            <input class="form-control heure-input" type="time" id="heure" name="heure" required>
+            <input id="heure" name="heure" type="time" class="form-control heure-input" required>
         </div>
 
+        <!-- Places -->
         <div class="mb-3">
-            <input class="form-control" type="number" id="places" name="places" min="1" required
-                placeholder="Nombre de places">
+            <input id="places" name="places" type="number" min="1" max="8" class="form-control"
+                placeholder="Nombre de places" value="3" required>
         </div>
-        <div class="input-group mb-3 align-items-center ">
+
+        <!-- Prix -->
+        <div class="input-group mb-3">
+            <span class="input-group-text">🪙</span>
+            <input id="prix" name="prix" type="number" min="0" step="0.5" class="form-control"
+                placeholder="Prix par passager" value="5">
+        </div>
+
+        <!-- Voyage écologique -->
+        <div class="input-group mb-3 align-items-center">
             <div class="input-group-text">
-                <input class="form-check-input mt-0" type="checkbox" value="1" id="ecologique" name="ecologique">
+                <input class="form-check-input mt-0" type="checkbox" id="ecologique" name="ecologique">
             </div>
             <label class="form-control ps-3" for="ecologique">Voyage écologique 🌱</label>
         </div>
 
-        <div class="input-group mb-3">
-            <span class="input-group-text">🪙
-            </span>
-            <input class="form-control" type="number" id="prix" name="prix" min="1" step="0.5" required
-                placeholder="Prix par passager">
-        </div>
-
-
-        <button id="btn-create-trajet" type="button" class="btn btn-primary mb-3">Publier mon trajet</button>
-
+        <!-- Boutons -->
+        <button id="btn-create-trajet" type="button" class="btn btn-primary mb-3">
+            Publier mon trajet
+        </button>
+        <button id="btn-clear-form" type="button" class="btn btn-outline-secondary mb-3">
+            Réinitialiser
+        </button>
     </div>
 </form>

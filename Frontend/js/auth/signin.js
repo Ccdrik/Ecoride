@@ -1,8 +1,8 @@
 import { setToken, setRole, clearAuthCookies, showAndHideElementsForRoles } from "./auth.js";
-import { showLoader, hideLoader } from "../utils/loader.js"; // ✅ loader global
+import { showLoader, hideLoader } from "../loader.js"; //  loader global
 
 export function initSigninPage() {
-    const form = document.getElementById("signin-form"); // ✅ on capte le submit du formulaire
+    const form = document.getElementById("signin-form"); //  on capte le submit du formulaire
     const mailInput = document.getElementById("EmailInput");
     const passwordInp = document.getElementById("PasswordInput");
     const btnSignin = document.getElementById("btnSignin");
