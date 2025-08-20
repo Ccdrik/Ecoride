@@ -33,17 +33,19 @@ security:
       jwt: ~
 
   access_control:
-    # ✅ IMPORTANT : autoriser le préflight CORS (OPTIONS) en premier
+    # ✅ Préflight CORS
     - { path: ^/api, methods: [OPTIONS], roles: PUBLIC_ACCESS }
 
     # ✅ Endpoints publics
-    - { path: ^/api/signup, roles: PUBLIC_ACCESS }
-    - { path: ^/api/signin, roles: PUBLIC_ACCESS }
-    - { path: ^/api/check-email, roles: PUBLIC_ACCESS }
+    - { path: ^/api/signup,       roles: PUBLIC_ACCESS }
+    - { path: ^/api/signin,       roles: PUBLIC_ACCESS }
+    - { path: ^/api/check-email,  roles: PUBLIC_ACCESS }
     - { path: ^/api/check-pseudo, roles: PUBLIC_ACCESS }
+    - { path: ^/api/trajets/\d+$, roles: PUBLIC_ACCESS, methods: [GET] }
+    - { path: ^/api/trajets$,     roles: PUBLIC_ACCESS, methods: [GET] }
 
     # 🔒 Admin
     - { path: ^/api/admin, roles: ROLE_ADMIN }
 
-    # 🔒 Tout le reste de l'API requiert un JWT valide
+    # 🔒 Tout le reste requiert un JWT
     - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

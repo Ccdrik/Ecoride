@@ -66,6 +66,12 @@ class Trajet
     #[Groups(['trajet:read'])]
     private bool $actif = true;
 
+    #[ORM\ManyToOne(targetEntity: Voiture::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Voiture $voiture = null;
+
+
+
     // --- Coordonnées GPS (nullable) ---
     #[ORM\Column(type: 'float', nullable: true, name: 'depart_lat')]
     #[Groups(['trajet:read'])]
@@ -229,5 +235,16 @@ public function setArriveeLat(?float $arriveeLat): self { $this->arriveeLat = $a
 
 public function getArriveeLng(): ?float { return $this->arriveeLng; }
 public function setArriveeLng(?float $arriveeLng): self { $this->arriveeLng = $arriveeLng; return $this; }
+
+public function getVoiture(): ?Voiture
+{
+    return $this->voiture;
+}
+
+public function setVoiture(?Voiture $voiture): self
+{
+    $this->voiture = $voiture;
+    return $this;
+}
 
 }

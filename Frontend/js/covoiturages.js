@@ -1,4 +1,3 @@
-// Frontend/js/covoiturages.js
 import { getToken, handle401 } from "./auth/auth.js";
 
 export function initCovoituragesPage() {
@@ -6,7 +5,6 @@ export function initCovoituragesPage() {
     const formFiltres = document.getElementById("form-filtres");
     const modalBody = document.getElementById("modal-detail-body");
 
-    // ⚙️ Backend
     const API_URL = "http://127.0.0.1:8000/api";
 
     // 🔎 Params de la barre d'adresse (venant de la home)
@@ -17,7 +15,7 @@ export function initCovoituragesPage() {
         date: url.searchParams.get("date") || ""
     };
 
-    // 🧰 Construit l'URL d'appel en combinant base + filtres
+    // 🧰 Construit l'URL /api/trajets avec base + filtres
     function buildApiUrl(extra = {}) {
         const u = new URL(`${API_URL}/trajets`);
         const full = { ...baseParams, ...extra };
@@ -30,13 +28,12 @@ export function initCovoituragesPage() {
         return u.toString();
     }
 
-    // 🗂️ Rendu d'une ligne
+    // 🗂️ Rendu d'une ligne (inclut data-bs-* pour ouvrir la modale sans JS)
     function renderRow(trajet) {
-        // compat nommages
         const villeDepart = trajet.villeDepart ?? trajet.depart ?? "-";
         const villeArrivee = trajet.villeArrivee ?? trajet.arrivee ?? "-";
         const dateHeure = trajet.dateDepart ?? trajet.date ?? "";
-        const [date = "-", heure = "-"] = dateHeure.split(" ");
+        const [date = "-", heure = "-"] = String(dateHeure).split(" ");
         const nbPlaces = trajet.nbPlaces ?? trajet.places ?? trajet.placesDisponibles ?? "-";
         const prix = trajet.prix ?? trajet.prixParPassager ?? "-";
         const ecolo = trajet.ecologique ? "🌱" : "🚗";
@@ -54,7 +51,12 @@ export function initCovoituragesPage() {
         <td>${chauffeur}</td>
         <td>
           <button class="btn btn-success btn-sm btn-reserver" data-id="${trajet.id}">Réserver</button>
-          <button class="btn btn-info btn-sm btn-detail" data-id="${trajet.id}">Détail</button>
+          <button
+            class="btn btn-info btn-sm btn-detail"
+            data-id="${trajet.id}"
+            data-bs-toggle="modal"
+            data-bs-target="#modalDetail"
+          >Détail</button>
         </td>
       </tr>
     `;
@@ -65,12 +67,17 @@ export function initCovoituragesPage() {
         container.innerHTML = `<tr><td colspan="9">Chargement...</td></tr>`;
         try {
             const res = await fetch(buildApiUrl(extra), {
-                headers: { Authorization: `Bearer ${getToken()}` },
+                headers: { Authorization: `Bearer ${getToken()}` }, // ok si route publique aussi
                 credentials: "include",
             });
 
             if (handle401(res)) return;
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            if (!res.ok) {
+                const preview = (await res.text()).slice(0, 200);
+                console.warn("Erreur liste trajets:", res.status, preview);
+                container.innerHTML = `<tr><td colspan="9" class="text-danger">Erreur ${res.status} lors du chargement</td></tr>`;
+                return;
+            }
 
             const data = await res.json();
             if (!Array.isArray(data) || data.length === 0) {
@@ -85,13 +92,13 @@ export function initCovoituragesPage() {
                 btn.addEventListener("click", () => reserver(btn));
             });
 
-            // ℹ️ Détail
+            // ℹ️ Détail (le data-bs-* ouvre la modale; ici on ne fait que remplir le contenu)
             document.querySelectorAll(".btn-detail").forEach((btn) => {
-                btn.addEventListener("click", () => ouvrirDetail(btn));
+                btn.addEventListener("click", () => chargerDetail(btn));
             });
 
         } catch (err) {
-            console.error("Erreur fetch :", err);
+            console.error("Erreur fetch liste:", err);
             container.innerHTML = `<tr><td colspan="9" class="text-danger text-center">Erreur lors du chargement</td></tr>`;
         }
     }
@@ -131,52 +138,62 @@ export function initCovoituragesPage() {
         }
     }
 
-    // 🔎 Détail trajet (modale)
-    async function ouvrirDetail(btn) {
+    // 🔎 Détail (remplissage de la modale)
+    async function chargerDetail(btn) {
         const trajetId = btn.dataset.id;
+        if (!trajetId) return;
+        if (modalBody) modalBody.textContent = "Chargement...";
+
         try {
-            modalBody.innerHTML = "Chargement...";
             const res = await fetch(`${API_URL}/trajets/${trajetId}`, {
                 headers: { Authorization: `Bearer ${getToken()}` },
                 credentials: "include",
             });
 
             if (handle401(res)) return;
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-            const trajet = await res.json();
-            const chauffeur = trajet.chauffeur ?? {};
-            const vehicule = trajet.vehicule ?? {};
+            // ⚠️ Garde: ne pas parser JSON si pas OK (ex: 403)
+            if (!res.ok) {
+                const preview = (await res.text()).slice(0, 200);
+                console.warn("Détail non accessible:", res.status, preview);
+                if (modalBody) {
+                    modalBody.innerHTML = `❌ Accès refusé au détail (HTTP ${res.status}).`;
+                }
+                alert("Erreur lors du chargement des détails");
+                return;
+            }
 
-            modalBody.innerHTML = `
-        <div>
-          <h5>${trajet.villeDepart ?? trajet.depart ?? "-"} → ${trajet.villeArrivee ?? trajet.arrivee ?? "-"}</h5>
-          <p><strong>Date :</strong> ${(trajet.dateDepart ?? trajet.date ?? "").split(" ")[0] || "-"}</p>
-          <p><strong>Heure départ :</strong> ${(trajet.dateDepart ?? trajet.date ?? "").split(" ")[1] || "-"}</p>
-          <p><strong>Conducteur :</strong> ${chauffeur.pseudo ?? chauffeur.nom ?? "—"} ${chauffeur.note ? `(${chauffeur.note}⭐)` : ""}</p>
-          <p><strong>Véhicule :</strong> ${vehicule.marque ?? "?"} ${vehicule.modele ?? ""} — ${vehicule.energie ?? "?"}</p>
-          <p><strong>Fumeur accepté :</strong> ${trajet.fumeur ? "Oui" : "Non"}</p>
-          <p><strong>Animaux acceptés :</strong> ${trajet.animaux ? "Oui" : "Non"}</p>
-          <hr/>
-          <h6>Avis</h6>
-          <ul>
-            ${(trajet.avis ?? [])
-                    .map((a) => `<li>${a.note}⭐ — ${a.commentaire}</li>`)
-                    .join("") || "<em>Aucun avis</em>"}
-          </ul>
-        </div>
-      `;
+            const t = await res.json();
+            const chauffeur = t.chauffeur ?? {};
+            const vehicule = t.vehicule ?? {};
+            const dateHeure = t.dateDepart ?? t.date ?? "";
+            const [date = "-", heure = "-"] = String(dateHeure).split(" ");
 
-            const modal = new bootstrap.Modal(document.getElementById("modalDetail"));
-            modal.show();
-
+            if (modalBody) {
+                modalBody.innerHTML = `
+          <div>
+            <h5>${t.villeDepart ?? t.depart ?? "-"} → ${t.villeArrivee ?? t.arrivee ?? "-"}</h5>
+            <p><strong>Date :</strong> ${date}</p>
+            <p><strong>Heure départ :</strong> ${heure}</p>
+            <p><strong>Conducteur :</strong> ${chauffeur.pseudo ?? chauffeur.nom ?? "—"} ${chauffeur.note ? `(${chauffeur.note}⭐)` : ""}</p>
+            <p><strong>Véhicule :</strong> ${vehicule.marque ?? "?"} ${vehicule.modele ?? ""} — ${vehicule.energie ?? "?"}</p>
+            <p><strong>Fumeur accepté :</strong> ${t.fumeur ? "Oui" : "Non"}</p>
+            <p><strong>Animaux acceptés :</strong> ${t.animaux ? "Oui" : "Non"}</p>
+            <hr/>
+            <h6>Avis</h6>
+            <ul>
+              ${(t.avis ?? []).map(a => `<li>${a.note}⭐ — ${a.commentaire}</li>`).join("") || "<em>Aucun avis</em>"}
+            </ul>
+          </div>
+        `;
+            }
         } catch (e) {
             console.error(e);
-            modalBody.innerHTML = "❌ Erreur lors du chargement des détails.";
+            if (modalBody) modalBody.textContent = "❌ Erreur lors du chargement des détails.";
         }
     }
 
-    // 🧪 Soumission des filtres
+    // 🧪 Filtres → recharge la liste
     formFiltres?.addEventListener("submit", (e) => {
         e.preventDefault();
         const payload = {
@@ -188,7 +205,7 @@ export function initCovoituragesPage() {
         chargerTrajets(payload);
     });
 
-    // 🚀 Premier chargement avec params de la barre d'adresse
+    // 🚀 Premier chargement (avec params URL)
     chargerTrajets();
 }
 
